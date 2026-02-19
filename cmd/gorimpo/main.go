@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/LXSCA7/gorimpo/internal/adapters/notifier"
+	"github.com/joho/godotenv"
 	"github.com/lmittmann/tint"
 )
 
@@ -21,7 +24,25 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
+	if err := godotenv.Load(); err != nil {
+		logger.Warn("Ficheiro .env não encontrado, a usar variáveis de sistema")
+	}
+
+	token := os.Getenv("TELEGRAM_TOKEN")
+	chatID := os.Getenv("TELEGRAM_CHAT_ID")
+
+	if token == "" || chatID == "" {
+		logger.Error("TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID em falta!")
+		os.Exit(1)
+	}
+
+	telegram := notifier.NewTelegram(token, chatID)
+
 	logger.Info("gorimpo started!", slog.String("version", Version))
+	bootMsg := fmt.Sprintf("🟢 <b>GOrimpo v%s</b> iniciado e pronto a garimpar!", Version)
+	if err := telegram.SendText(bootMsg); err != nil {
+		logger.Error("Erro ao enviar mensagem de boot", "erro", err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -49,7 +70,10 @@ func main() {
 
 	sig := <-stopChan
 	logger.Warn("graceful shutdown...", slog.String("signal", sig.String()))
-	logger.Info("shutdown notification")
+	shutdownMsg := fmt.Sprintf("🔴 <b>GOrimpo v%s</b> fechando!", Version)
+	if err := telegram.SendText(shutdownMsg); err != nil {
+		logger.Error("Erro ao enviar mensagem de boot", "erro", err)
+	}
 
 	cancel()
 	time.Sleep(2 * time.Second)
