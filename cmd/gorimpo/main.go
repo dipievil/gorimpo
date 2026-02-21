@@ -56,7 +56,6 @@ func main() {
 
 	systemSvc := services.NewSystemService(repo, telegram, cfg)
 	_ = systemSvc.Setup(Version)
-	// telegram.SetRoutes(routes)
 
 	gorimpoSvc := services.NewGorimpoService(olxScraper, repo, telegram, cfg)
 
