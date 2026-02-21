@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/LXSCA7/gorimpo/internal/core/domain"
+	"github.com/LXSCA7/gorimpo/internal/core/ports"
 	"github.com/playwright-community/playwright-go"
 )
 
@@ -17,6 +18,8 @@ type OLXAdapter struct{}
 func NewOLX() *OLXAdapter {
 	return &OLXAdapter{}
 }
+
+var _ ports.Scraper = (*OLXAdapter)(nil)
 
 func parsePrice(p string) float64 {
 	p = strings.ReplaceAll(p, "R$", "")
