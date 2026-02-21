@@ -1,4 +1,4 @@
-.PHONY: build run docker-build docker-run clean
+.PHONY: build run docker-build docker-run clean dev-up dev-down prod-up
 
 # Variáveis
 IMAGE_NAME = gorimpo-test
@@ -24,6 +24,18 @@ docker-run:
 		-v ./data:/app/data \
 		-v ./config.yaml:/app/config.yaml \
 		$(IMAGE_NAME)
+
+dev-up:
+	@echo "🧪 Subindo GOrimpo + Infra local para testes..."
+	docker compose -f docker-compose.dev.yml up -d --build
+
+dev-down:
+	@echo "🛑 Derrubando ambiente de testes..."
+	docker compose -f docker-compose.dev.yml down
+
+prod-up:
+	@echo "🔥 Subindo Produção (Pull do GHCR + Watchtower)..."
+	docker compose -f docker-compose.yml up -d
 
 clean:
 	@echo "🧹 Limpando binários e containers..."
