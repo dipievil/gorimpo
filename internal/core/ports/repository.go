@@ -6,3 +6,10 @@ type OfferRepository interface {
 	OfferExists(link string) (bool, error)
 	SaveOffer(offer domain.Offer) error
 }
+
+type SystemRepository interface {
+	GetRoute(category string) string
+	SaveRoute(category, destID string) error
+	GetLastVersion() string
+	SetCurrentVersion(version string) error
+}

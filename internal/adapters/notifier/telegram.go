@@ -59,6 +59,50 @@ func (t *TelegramAdapter) Send(offer domain.Offer, category string) error {
 	return t.SendText(msg, category)
 }
 
+func (t *TelegramAdapter) CreateCategory(name string) (string, error) {
+	type createTopicResponse struct {
+		Ok     bool `json:"ok"`
+		Result struct {
+			MessageThreadID int `json:"message_thread_id"`
+		} `json:"result"`
+	}
+
+	apiURL := fmt.Sprintf("https://api.telegram.org/bot%s/createForumTopic", t.Token)
+
+	payload := map[string]any{
+		"chat_id": t.ChatID,
+		"name":    name,
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", fmt.Errorf("erro ao montar json do novo tópico: %v", err)
+	}
+
+	resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return "", fmt.Errorf("erro de rede ao bater no telegram: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		slog.Error("Erro ao criar tópico no Telegram", "status", resp.StatusCode, "motivo", string(bodyBytes))
+		return "", fmt.Errorf("telegram recusou criar tópico. Status: %d", resp.StatusCode)
+	}
+
+	var result createTopicResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("erro ao decodificar a resposta do telegram: %v", err)
+	}
+
+	if !result.Ok {
+		return "", fmt.Errorf("telegram retornou ok=false ao tentar criar o tópico")
+	}
+
+	return strconv.Itoa(result.Result.MessageThreadID), nil
+}
+
 func (t *TelegramAdapter) doRequest(payload map[string]any) error {
 	body, err := json.Marshal(payload)
 	if err != nil {

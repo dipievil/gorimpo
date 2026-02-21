@@ -16,57 +16,52 @@ import (
 
 var Version = "dev"
 
-func main() {
+func setupLogger() {
 	logger := slog.New(tint.NewHandler(os.Stdout, &tint.Options{
 		Level:      slog.LevelDebug,
 		TimeFormat: time.TimeOnly,
 	}))
 	slog.SetDefault(logger)
-	routes := make(map[string]string)
+}
+
+func main() {
+	setupLogger()
+	_ = godotenv.Load()
+
+	if err := os.MkdirAll("data", os.ModePerm); err != nil {
+		slog.Error("Erro ao criar pasta data", "erro", err)
+		os.Exit(1)
+	}
 
 	cfg, err := config.Load("./config.yaml")
 	if err != nil {
-		panic(err)
+		slog.Error("Erro ao carregar configurações", "erro", err)
+		os.Exit(1)
 	}
 
-	for _, cat := range cfg.Categories {
-		if !cfg.App.UseTopics {
-			routes[cat] = "0"
-		} else {
-			if cat == "nintendo" {
-				routes[cat] = "3"
-			} else {
-				routes[cat] = "0"
-			}
-		}
-	}
-	_ = godotenv.Load()
-
-	token := os.Getenv("TELEGRAM_TOKEN")
-	chatID := os.Getenv("TELEGRAM_CHAT_ID")
-
+	token, chatID := os.Getenv("TELEGRAM_TOKEN"), os.Getenv("TELEGRAM_CHAT_ID")
 	if token == "" || chatID == "" {
-		logger.Error("missing TELEGRAM_TOKEN or TELEGRAM_CHAT_ID")
+		slog.Error("Variáveis TELEGRAM_TOKEN ou TELEGRAM_CHAT_ID ausentes")
 		os.Exit(1)
 	}
 
 	telegram := notifier.NewTelegram(token, chatID)
-	telegram.SetRoutes(routes)
-
-	olxScraper := scraper.NewOLX()
-	if err := os.MkdirAll("data", os.ModePerm); err != nil {
-		logger.Error("Erro ao criar pasta data", "erro", err)
-		os.Exit(1)
-	}
+	olxScraper := scraper.NewOLX(Version != "dev")
 
 	repo, err := repository.NewSQLite("data/gorimpo.db")
 	if err != nil {
-		logger.Error("Erro ao iniciar o banco de dados", "erro", err)
+		slog.Error("Erro ao iniciar o banco de dados", "erro", err)
 		os.Exit(1)
 	}
+
+	systemSvc := services.NewSystemService(repo, telegram, cfg)
+	routes := systemSvc.Setup(Version)
+	telegram.SetRoutes(routes)
+
 	gorimpoSvc := services.NewGorimpoService(olxScraper, repo, telegram, cfg)
 
 	slog.Info("🚀 GOrimpo starting...", slog.String("version", Version))
 	gorimpoSvc.Start(Version)
-	logger.Info("👋 Sistema encerrado.")
+
+	slog.Info("👋 Sistema encerrado.")
 }

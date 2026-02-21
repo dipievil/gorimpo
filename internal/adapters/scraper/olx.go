@@ -13,10 +13,14 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-type OLXAdapter struct{}
+type OLXAdapter struct {
+	isHeadless bool
+}
 
-func NewOLX() *OLXAdapter {
-	return &OLXAdapter{}
+func NewOLX(isHeadless bool) *OLXAdapter {
+	return &OLXAdapter{
+		isHeadless: isHeadless,
+	}
 }
 
 var _ ports.Scraper = (*OLXAdapter)(nil)
@@ -38,7 +42,7 @@ func (o *OLXAdapter) Search(term string) ([]domain.Offer, error) {
 	defer pw.Stop()
 
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
-		Headless: playwright.Bool(false),
+		Headless: playwright.Bool(o.isHeadless),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("não foi possível lançar o browser: %v", err)
