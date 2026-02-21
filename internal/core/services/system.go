@@ -23,8 +23,10 @@ func NewSystemService(r ports.SystemRepository, n ports.Notifier, c *config.Conf
 }
 
 func (s *SystemService) Setup(currentVersion string) map[string]string {
+	routes := s.setupRoutes()
+	s.notifier.SetRoutes(routes)
 	s.checkVersion(currentVersion)
-	return s.setupRoutes()
+	return routes
 }
 
 func (s *SystemService) checkVersion(currentVersion string) {
@@ -35,7 +37,7 @@ func (s *SystemService) checkVersion(currentVersion string) {
 
 		changelogMsg := fmt.Sprintf(
 			"🚀 <b>GOrimpo Atualizado com Sucesso!</b>\n\n"+
-				"De: <code>v%s</code>\nPara: <code>v%s</code>\n\n"+
+				"De: <code>%s</code>\nPara: <code>%s</code>\n\n"+
 				"🔗 <a href=\"https://github.com/LXSCA7/gorimpo/releases\">Ver Changelog</a>",
 			lastVersion, currentVersion,
 		)
