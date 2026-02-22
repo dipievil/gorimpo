@@ -2,7 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
+	"sync"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -26,15 +29,107 @@ type Config struct {
 	Searches   []Search    `yaml:"searches"`
 }
 
+type ConfigManager struct {
+	mu       sync.RWMutex
+	config   *Config
+	filepath string
+	lastMod  time.Time
+	OnReload func(added, removed []string)
+}
+
+// var _ ports.ConfigManager = (*ConfigManager)(nil)
+
+func NewConfigManager(path string) (*ConfigManager, error) {
+	cfg, err := Load(path)
+	if err != nil {
+		return nil, err
+	}
+
+	stat, _ := os.Stat(path)
+
+	return &ConfigManager{
+		config:   cfg,
+		filepath: path,
+		lastMod:  stat.ModTime(),
+	}, nil
+}
+
+func (c *ConfigManager) Get() *Config {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.config
+}
+
+func (c *ConfigManager) Watch() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		stat, err := os.Stat(c.filepath)
+		if err != nil {
+			continue
+		}
+
+		if stat.ModTime().After(c.lastMod) {
+			c.loadAndCompare(stat.ModTime())
+		}
+	}
+}
+
+func (c *ConfigManager) loadAndCompare(newModTime time.Time) {
+	newConfig, err := Load(c.filepath)
+	if err != nil {
+		slog.Error("Falha ao recarregar config via Hot Reload", "erro", err)
+		return
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	oldMap := make(map[string]bool)
+	for _, s := range c.config.Searches {
+		oldMap[s.Term] = true
+	}
+
+	newMap := make(map[string]bool)
+	var added []string
+	for _, s := range newConfig.Searches {
+		newMap[s.Term] = true
+		if !oldMap[s.Term] {
+			added = append(added, s.Term)
+		}
+	}
+
+	var removed []string
+	for _, s := range c.config.Searches {
+		if !newMap[s.Term] {
+			removed = append(removed, s.Term)
+		}
+	}
+
+	if len(added) > 0 || len(removed) > 0 {
+		slog.Info("🔥 Hot Reload: Configuração de buscas alterada!", "adicionadas", added, "removidas", removed)
+
+		if c.OnReload != nil {
+			c.OnReload(added, removed)
+		}
+	} else {
+		slog.Info("🔥 Hot Reload: Arquivo atualizado (Edição interna).")
+	}
+
+	c.config = newConfig
+	c.lastMod = newModTime
+}
+
 func Load(filepath string) (*Config, error) {
 	file, err := os.ReadFile(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("erro ao ler o arquivo de configuracao: %v", err)
+		return nil, fmt.Errorf("erro ao ler o arquivo: %v", err)
 	}
 
 	var cfg Config
 	if err := yaml.Unmarshal(file, &cfg); err != nil {
-		return nil, fmt.Errorf("erro ao fazer o parse do yaml: %v", err)
+		return nil, fmt.Errorf("erro no parse do yaml: %v", err)
 	}
 
 	return &cfg, nil

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -36,7 +37,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cfg, err := config.Load("./config.yaml")
+	cfg, err := config.NewConfigManager("./config.yaml")
 	if err != nil {
 		slog.Error("Erro ao carregar configurações", "erro", err)
 		os.Exit(1)
@@ -50,6 +51,19 @@ func main() {
 
 	telegram := notifier.NewTelegram(token, chatID)
 	olxScraper := scraper.NewOLX(Version != "dev")
+
+	cfg.OnReload = func(added, removed []string) {
+		msg := "🔥 <b>Hot Reload: Buscas Atualizadas!</b>\n\n"
+		if len(added) > 0 {
+			msg += fmt.Sprintf("✅ <b>Adicionadas:</b> %v\n", added)
+		}
+		if len(removed) > 0 {
+			msg += fmt.Sprintf("❌ <b>Removidas:</b> %v\n", removed)
+		}
+
+		_ = telegram.SendText(msg, "system")
+	}
+	go cfg.Watch()
 
 	repo, err := repository.NewSQLite("data/gorimpo.db")
 	if err != nil {

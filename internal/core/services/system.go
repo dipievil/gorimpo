@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/LXSCA7/gorimpo/internal/config"
 	"github.com/LXSCA7/gorimpo/internal/core/ports"
 )
 
 type SystemService struct {
-	repo     ports.SystemRepository
-	notifier ports.Notifier
-	config   *config.Config
+	repo          ports.SystemRepository
+	notifier      ports.Notifier
+	configManager ports.ConfigManager
 }
 
-func NewSystemService(r ports.SystemRepository, n ports.Notifier, c *config.Config) *SystemService {
+func NewSystemService(r ports.SystemRepository, n ports.Notifier, c ports.ConfigManager) *SystemService {
 	return &SystemService{
-		repo:     r,
-		notifier: n,
-		config:   c,
+		repo:          r,
+		notifier:      n,
+		configManager: c,
 	}
 }
 
@@ -48,13 +47,14 @@ func (s *SystemService) checkVersion(currentVersion string) {
 }
 
 func (s *SystemService) setupRoutes() map[string]string {
+	config := s.configManager.Get()
 	slog.Info("🗺️ Configurando rotas do sistema...")
 	routes := make(map[string]string)
 
 	cats := []string{"system"}
-	cats = append(cats, s.config.Categories...)
+	cats = append(cats, config.Categories...)
 	for _, cat := range cats {
-		if !s.config.App.UseTopics {
+		if !config.App.UseTopics {
 			routes[cat] = "0"
 			continue
 		}

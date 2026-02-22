@@ -16,11 +16,11 @@ import (
 )
 
 type GorimpoService struct {
-	scraper   ports.Scraper
-	offerRepo ports.OfferRepository
-	notifier  ports.Notifier
-	metrics   ports.Metrics
-	config    *config.Config
+	scraper       ports.Scraper
+	offerRepo     ports.OfferRepository
+	notifier      ports.Notifier
+	metrics       ports.Metrics
+	configManager ports.ConfigManager
 }
 
 func NewGorimpoService(
@@ -28,14 +28,14 @@ func NewGorimpoService(
 	or ports.OfferRepository,
 	n ports.Notifier,
 	m ports.Metrics,
-	c *config.Config,
+	c ports.ConfigManager,
 ) *GorimpoService {
 	return &GorimpoService{
-		scraper:   s,
-		offerRepo: or,
-		notifier:  n,
-		metrics:   m,
-		config:    c,
+		scraper:       s,
+		offerRepo:     or,
+		notifier:      n,
+		metrics:       m,
+		configManager: c,
 	}
 }
 
@@ -82,7 +82,8 @@ func (g *GorimpoService) Start(version string) {
 func (g *GorimpoService) runCycle() {
 	slog.Info("⛏️ Starting YAML parsing cycle...")
 
-	for _, search := range g.config.Searches {
+	config := g.configManager.Get()
+	for _, search := range config.Searches {
 		g.processSearch(search)
 		time.Sleep(2 * time.Second)
 	}
