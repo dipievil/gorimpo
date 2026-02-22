@@ -82,7 +82,7 @@ func (r *SQLiteRepository) SaveOffer(offer domain.Offer) error {
 }
 
 func (r *SQLiteRepository) SaveDiscarded(offer domain.Offer, reason string) (bool, error) {
-	query := `INSERT INTO discarded (link, title, price, reason) 
+	query := `INSERT INTO discarded_offers (link, title, price, reason) 
 	VALUES (?, ?, ?, ?) 
 	ON CONFLICT(link) DO NOTHING`
 
