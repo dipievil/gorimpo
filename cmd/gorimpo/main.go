@@ -21,10 +21,18 @@ import (
 var Version = "dev"
 
 func setupLogger() {
-	logger := slog.New(tint.NewHandler(os.Stdout, &tint.Options{
-		Level:      slog.LevelDebug,
-		TimeFormat: time.TimeOnly,
-	}))
+	var logger *slog.Logger
+	if Version == "dev" {
+		logger = slog.New(tint.NewHandler(os.Stdout, &tint.Options{
+			Level:      slog.LevelDebug,
+			TimeFormat: time.TimeOnly,
+		}))
+	} else {
+		opts := &slog.HandlerOptions{Level: slog.LevelDebug}
+		logger = slog.New(slog.NewJSONHandler(os.Stdout, opts))
+		slog.SetDefault(logger)
+	}
+
 	slog.SetDefault(logger)
 }
 
