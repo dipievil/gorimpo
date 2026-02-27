@@ -156,6 +156,9 @@ func (o *OLXAdapter) setupBrowser(userAgent string) (playwright.Page, func(), er
 
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(o.isHeadless),
+		Args: []string{
+			"--disable-blink-features=AutomationControlled",
+		},
 	})
 	if err != nil {
 		pw.Stop()
@@ -164,6 +167,10 @@ func (o *OLXAdapter) setupBrowser(userAgent string) (playwright.Page, func(), er
 
 	browserContext, err := browser.NewContext(playwright.BrowserNewContextOptions{
 		UserAgent: playwright.String(userAgent),
+		ExtraHttpHeaders: map[string]string{
+			"Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+			"Connection":      "keep-alive",
+		},
 		Viewport: &playwright.Size{
 			Width:  1920,
 			Height: 1080,

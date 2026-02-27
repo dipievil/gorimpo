@@ -59,14 +59,17 @@ func (g *GorimpoService) Start(version string) {
 		slog.Info("Starting search routine...")
 		g.runCycle()
 
-		ticker := time.NewTicker(2 * time.Minute)
-		defer ticker.Stop()
+		minutes := 2 + rand.IntN(4)
+		seconds := rand.IntN(60)
+		waitTime := time.Duration(minutes)*time.Minute + time.Duration(seconds)*time.Second
+
+		slog.Info("Aguardando próximo ciclo", "tempo_total", waitTime.String())
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-ticker.C:
+			case <-time.After(waitTime):
 				g.runCycle()
 			}
 		}
