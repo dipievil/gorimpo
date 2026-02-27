@@ -51,10 +51,15 @@ func (t *TelegramAdapter) SendText(message, category string) error {
 	return t.doRequest(payload)
 }
 
-func (t *TelegramAdapter) Send(offer domain.Offer, category string) error {
+func (t *TelegramAdapter) Send(offer domain.Offer, category, searchTerm string, showSearchTerm bool) error {
+	header := "🚨 <b>NOVO ACHADO NO " + offer.Source + "!</b>"
+	if showSearchTerm {
+		header = fmt.Sprintf("🔍 <i>Busca: %s</i>\n%s", searchTerm, header)
+	}
+
 	msg := fmt.Sprintf(
-		"🚨 <b>NOVO ACHADO NO %s!</b>\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
-		offer.Source, offer.Title, offer.Price, offer.Link,
+		"%s\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
+		header, offer.Title, offer.Price, offer.Link,
 	)
 
 	return t.SendText(msg, category)

@@ -6,11 +6,12 @@ type AppSettings struct {
 }
 
 type Search struct {
-	Term     string   `yaml:"term"`
-	MinPrice float64  `yaml:"min_price"`
-	MaxPrice float64  `yaml:"max_price"`
-	Category string   `yaml:"category"`
-	Exclude  []string `yaml:"exclude"`
+	Term           string   `yaml:"term"`
+	MinPrice       float64  `yaml:"min_price"`
+	MaxPrice       float64  `yaml:"max_price"`
+	Category       string   `yaml:"category"`
+	Exclude        []string `yaml:"exclude"`
+	ShowSearchTerm bool     `yaml:"show_search_term"`
 }
 
 type ScraperSettings struct {

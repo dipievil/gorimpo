@@ -145,7 +145,7 @@ func (g *GorimpoService) processSearch(search domain.Search) {
 			continue
 		}
 
-		if err := g.notifier.Send(offer, search.Category); err != nil {
+		if err := g.notifier.Send(offer, search.Category, search.Term, search.ShowSearchTerm); err != nil {
 			slog.Error("Error sending to Telegram", "error", err)
 			time.Sleep(3 * time.Second)
 			continue
