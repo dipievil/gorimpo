@@ -12,6 +12,7 @@
     <img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white" alt="Playwright">
     <img src="https://img.shields.io/github/v/release/LXSCA7/gorimpo?style=for-the-badge&color=00ADD8">
     <img src="https://img.shields.io/github/actions/workflow/status/LXSCA7/gorimpo/docker.yml?style=for-the-badge&label=BUILD" />
+    <img src="https://img.shields.io/badge/License-Polyform_Non--Commercial-orange?style=for-the-badge" alt="License">
   </p>
 </div>
 
