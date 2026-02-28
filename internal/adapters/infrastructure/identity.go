@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"fmt"
+	"log/slog"
 	"math/rand/v2"
 
 	"github.com/LXSCA7/gorimpo/internal/core/domain"
@@ -19,6 +20,7 @@ func NewRandomUAFactory(count int) *RandomUAFactory {
 	if count == 0 {
 		count = 3
 	}
+	slog.Info("🤖 Generating user agents...", "count", count)
 	f.identities = make([]domain.UserAgent, count)
 	f.generate(count)
 	return f
