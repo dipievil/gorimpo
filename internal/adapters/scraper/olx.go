@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math/rand/v2"
@@ -75,43 +76,64 @@ func (o *OLXAdapter) Search(term string) ([]domain.Offer, error) {
 	}
 
 	result, err := page.Locator("section.olx-adcard").EvaluateAll(`elements => {
-		return elements.map(el => {
-			// Caça os elementos de dentro do card principal
-			const linkEl = el.querySelector('a');
-			const titleEl = el.querySelector('h2');
-			const priceEl = el.querySelector('h3');
-			const imgEl = el.querySelector('img');
-			
-			return {
-				link: linkEl ? linkEl.href : "",
-				title: titleEl ? titleEl.innerText.trim() : "",
-				price: priceEl ? priceEl.innerText.trim() : "",
-				image: imgEl ? (imgEl.src || imgEl.getAttribute('data-src') || "") : ""
-			};
-		}).filter(item => item.price !== "" && item.title !== ""); // Só devolve se for um anúncio válido
-	}`)
+   return elements.map(el => {
+      const linkEl = el.querySelector('a[data-testid="adcard-link"]');
+      const titleEl = el.querySelector('.olx-adcard__title');
+      const priceEl = el.querySelector('h3');
+      const imgEl = el.querySelector('img');
+      const dateEl = el.querySelector('.olx-adcard__date');
+      
+      const badgeElements = Array.from(el.querySelectorAll('.olx-adcard__badges .olx-core-badge'));
+      const tags = badgeElements.map(badge => badge.innerText.trim());
+
+      const featuredBadge = el.querySelector('.olx-adcard__primary-badge');
+      const isFeatured = featuredBadge ? featuredBadge.innerText.includes("Destaque") : false;
+
+      return {
+         link: linkEl ? linkEl.href : "",
+         title: titleEl ? titleEl.innerText.trim() : "",
+         price: priceEl ? priceEl.innerText.trim() : "",
+         image: imgEl ? (imgEl.src || imgEl.getAttribute('data-src') || "") : "",
+         postDate: dateEl ? dateEl.innerText.trim() : "",
+         tags: tags,
+         isFeatured: isFeatured
+      };
+   }).filter(item => item.price !== "" && item.title !== "");
+}`)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao extrair dados via JS: %v", err)
 	}
 
+	type jsOffer struct {
+		Link       string   `json:"link"`
+		Title      string   `json:"title"`
+		Price      string   `json:"price"`
+		Image      string   `json:"image"`
+		Tags       []string `json:"tags"`
+		IsFeatured bool     `json:"isFeatured"`
+	}
+
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("error on marshal olx results: %v", err)
+	}
+
+	var tempItems []jsOffer
+	if err := json.Unmarshal(bytes, &tempItems); err != nil {
+		return nil, fmt.Errorf("erro ao unmarshal de resultados: %v", err)
+	}
+
 	var ofertas []domain.Offer
-	items := result.([]interface{})
-
-	for _, item := range items {
-		data := item.(map[string]interface{})
-
-		link := data["link"].(string)
-		title := data["title"].(string)
-		priceStr := data["price"].(string)
-		image := data["image"].(string)
-
-		if link != "" && strings.Contains(link, "olx.com.br") {
+	for _, item := range tempItems {
+		if item.Link != "" && strings.Contains(item.Link, "olx.com.br") {
 			ofertas = append(ofertas, domain.Offer{
-				Title:    title,
-				Price:    parsePrice(priceStr),
-				Link:     link,
-				Source:   "OLX",
-				ImageURL: image,
+				Title:      item.Title,
+				Price:      parsePrice(item.Price),
+				Link:       item.Link,
+				Source:     "OLX",
+				ImageURL:   item.Image,
+				Tags:       item.Tags,
+				IsFeatured: item.IsFeatured,
 			})
 		}
 	}

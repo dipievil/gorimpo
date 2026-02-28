@@ -9,6 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/LXSCA7/gorimpo/internal/core/domain"
@@ -58,9 +59,14 @@ func (t *TelegramAdapter) Send(offer domain.Offer, category, searchTerm string, 
 		header = fmt.Sprintf("🔍 <i>Busca: %s</i>\n%s", searchTerm, header)
 	}
 
+	tagsStr := formatTags(offer.Tags)
 	msg := fmt.Sprintf(
-		"%s\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
-		header, offer.Title, offer.Price, offer.Link,
+		"%s\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>%s\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
+		header,
+		offer.Title,
+		offer.Price,
+		tagsStr,
+		offer.Link,
 	)
 
 	return t.SendText(msg, category)
@@ -191,4 +197,11 @@ func (t *TelegramAdapter) doRequest(payload map[string]any) error {
 
 	slog.Error("Erro na API do Telegram", "status", resp.StatusCode, "motivo", string(bodyBytes))
 	return fmt.Errorf("erro na api do telegram: status %d - %s", resp.StatusCode, string(bodyBytes))
+}
+
+func formatTags(tags []string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	return fmt.Sprintf("\n🏷️ <i>%s</i>", strings.Join(tags, " | "))
 }

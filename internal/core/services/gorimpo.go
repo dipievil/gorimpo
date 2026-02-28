@@ -152,8 +152,15 @@ func (g *GorimpoService) processSearch(search domain.Search) {
 	discardedByPrice := 0
 	discardedByFilter := 0
 	duplicated := 0
+	irrelevantFeatured := 0
 
 	for _, offer := range rawOffers {
+		if offer.IsFeatured && !strings.Contains(offer.Title, search.Term) {
+			irrelevantFeatured++
+			slog.Debug("🚫 Ignorando destaque irrelevante", "title", offer.Title)
+			continue
+		}
+
 		if offer.Price < search.MinPrice || (search.MaxPrice > 0 && offer.Price > search.MaxPrice) {
 			isNew, _ := g.offerRepo.SaveDiscarded(offer, "price")
 			if isNew {
@@ -183,6 +190,7 @@ func (g *GorimpoService) processSearch(search domain.Search) {
 		"discarded_price_new", discardedByPrice,
 		"discarded_filter_new", discardedByFilter,
 		"discarded_duplicated", duplicated,
+		"irrelevant_featured", irrelevantFeatured,
 	)
 
 	newOffersCount := 0
