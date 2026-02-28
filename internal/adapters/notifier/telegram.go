@@ -61,11 +61,12 @@ func (t *TelegramAdapter) Send(offer domain.Offer, category, searchTerm string, 
 
 	tagsStr := formatTags(offer.Tags)
 	msg := fmt.Sprintf(
-		"%s\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>%s\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
+		"%s\n\n🎮 <b>%s</b>\n💰 Preço: <b>R$ %.2f</b>%s\n🕗 Postado em: <b>%s</b>\n\n🔗 <a href=\"%s\">Ver Anúncio</a>",
 		header,
 		offer.Title,
 		offer.Price,
 		tagsStr,
+		formatDate(offer.PostDate),
 		offer.Link,
 	)
 
@@ -204,4 +205,23 @@ func formatTags(tags []string) string {
 		return ""
 	}
 	return fmt.Sprintf("\n🏷️ <i>%s</i>", strings.Join(tags, " | "))
+}
+
+func formatDate(t time.Time) string {
+	now := time.Now()
+	hour := t.Format("15:04")
+
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	yesterday := today.AddDate(0, 0, -1)
+	dateOfTime := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+
+	if dateOfTime.Equal(today) {
+		return fmt.Sprintf("Hoje às %s", hour)
+	}
+
+	if dateOfTime.Equal(yesterday) {
+		return fmt.Sprintf("Ontem às %s", hour)
+	}
+
+	return fmt.Sprintf("%s às %s", t.Format("02/01/2006"), hour)
 }

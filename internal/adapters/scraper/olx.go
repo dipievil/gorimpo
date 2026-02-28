@@ -111,6 +111,7 @@ func (o *OLXAdapter) Search(term string) ([]domain.Offer, error) {
 		Image      string   `json:"image"`
 		Tags       []string `json:"tags"`
 		IsFeatured bool     `json:"isFeatured"`
+		PostDate   string   `json:"postDate"`
 	}
 
 	bytes, err := json.Marshal(result)
@@ -125,6 +126,7 @@ func (o *OLXAdapter) Search(term string) ([]domain.Offer, error) {
 
 	var ofertas []domain.Offer
 	for _, item := range tempItems {
+		postDate := parseOLXDate(item.PostDate)
 		if item.Link != "" && strings.Contains(item.Link, "olx.com.br") {
 			ofertas = append(ofertas, domain.Offer{
 				Title:      item.Title,
@@ -134,6 +136,7 @@ func (o *OLXAdapter) Search(term string) ([]domain.Offer, error) {
 				ImageURL:   item.Image,
 				Tags:       item.Tags,
 				IsFeatured: item.IsFeatured,
+				PostDate:   postDate,
 			})
 		}
 	}
@@ -229,4 +232,44 @@ func (o *OLXAdapter) setupBrowser(userAgent domain.UserAgent) (playwright.Page, 
 	}
 
 	return page, close, nil
+}
+
+func parseOLXDate(dateStr string) time.Time {
+	now := time.Now()
+	cleanStr := strings.ReplaceAll(strings.ToLower(dateStr), ",", "")
+
+	parts := strings.Split(strings.ToLower(dateStr), ", ")
+	timePart := "00:00"
+	if len(parts) > 1 {
+		timePart = parts[1]
+	}
+
+	t, _ := time.Parse("15:04", timePart)
+
+	if strings.Contains(dateStr, "hoje") {
+		return time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), 0, 0, now.Location())
+	}
+
+	if strings.Contains(dateStr, "ontem") {
+		yesterday := now.AddDate(0, 0, -1)
+		return time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), t.Hour(), t.Minute(), 0, 0, now.Location())
+	}
+
+	months := map[string]time.Month{
+		"jan": time.January, "fev": time.February, "mar": time.March,
+		"abr": time.April, "mai": time.May, "jun": time.June,
+		"jul": time.July, "ago": time.August, "set": time.September,
+		"out": time.October, "nov": time.November, "dez": time.December,
+	}
+
+	fields := strings.Fields(cleanStr)
+	if len(fields) >= 3 {
+		dia, _ := strconv.Atoi(fields[0])
+		mesStr := fields[2]
+		if mes, ok := months[mesStr]; ok {
+			return time.Date(now.Year(), mes, dia, t.Hour(), t.Minute(), 0, 0, now.Location())
+		}
+	}
+
+	return now
 }

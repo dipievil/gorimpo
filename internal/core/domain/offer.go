@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type Offer struct {
 	Title      string
 	Price      float64
@@ -8,4 +10,5 @@ type Offer struct {
 	ImageURL   string
 	Tags       []string
 	IsFeatured bool
+	PostDate   time.Time
 }
