@@ -155,11 +155,11 @@ func (o *OLXAdapter) setupBrowser(userAgent domain.UserAgent) (playwright.Page, 
 	var browser playwright.Browser
 	launchOptions := playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(o.isHeadless),
-		Args:     []string{"--disable-blink-features=AutomationControlled"},
 	}
 
 	switch userAgent.Browser {
 	case "chromium":
+		launchOptions.Args = []string{"--disable-blink-features=AutomationControlled"}
 		browser, err = pw.Chromium.Launch(launchOptions)
 		slog.Info("🌐  UserAgent selecionado", "user_agent", userAgent.UserAgent)
 	case "firefox":
