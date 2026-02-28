@@ -161,10 +161,10 @@ func (o *OLXAdapter) setupBrowser(userAgent domain.UserAgent) (playwright.Page, 
 	switch userAgent.Browser {
 	case "chromium":
 		browser, err = pw.Chromium.Launch(launchOptions)
-		slog.Info("🦊  UserAgent selecionado", "user_agent", userAgent.UserAgent)
+		slog.Info("🌐  UserAgent selecionado", "user_agent", userAgent.UserAgent)
 	case "firefox":
 		browser, err = pw.Firefox.Launch(launchOptions)
-		slog.Info("🌐  UserAgent selecionado", "user_agent", userAgent.UserAgent)
+		slog.Info("🦊  UserAgent selecionado", "user_agent", userAgent.UserAgent)
 	default:
 		browser, err = pw.WebKit.Launch(launchOptions)
 		slog.Info("🧭  UserAgent selecionado", "user_agent", userAgent.UserAgent)
