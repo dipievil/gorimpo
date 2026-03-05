@@ -1,8 +1,16 @@
 package domain
 
 type AppSettings struct {
-	DefaultNotifier string `yaml:"default_notifier"`
-	UseTopics       bool   `yaml:"use_topics"`
+	DefaultNotifier string            `yaml:"default_notifier"`
+	Notifiers       NotifiersSettings `yaml:"notifiers"`
+}
+
+type NotifiersSettings struct {
+	Telegram TelegramNotifierSettings `yaml:"telegram"`
+}
+
+type TelegramNotifierSettings struct {
+	UseTopics *bool `yaml:"use_topics"`
 }
 
 type Search struct {
