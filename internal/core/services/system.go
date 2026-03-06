@@ -56,11 +56,13 @@ func (s *SystemService) checkVersion(currentVersion string) {
 }
 
 func (s *SystemService) setupRoutes() (map[string]string, []string) {
-	config := s.configManager.Get()
-	slog.Info("🗺️ Configurando rotas de notificação por categoria...")
 	routes := make(map[string]string)
 	newTopics := []string{}
-	useTelegramTopics := (strings.EqualFold(config.App.DefaultNotifier, "telegram") && (config.App.Notifiers.Telegram.UseTopics != nil && *config.App.Notifiers.Telegram.UseTopics))
+	config := s.configManager.Get()
+
+	useTelegramTopics := (strings.EqualFold(config.App.DefaultNotifier, "telegram") && (config.App.UseTopics != nil && *config.App.UseTopics))
+
+	slog.Info("🗺️ Configurando rotas de notificação por categoria...")
 
 	categories := []string{"system"}
 	categories = append(categories, config.Categories...)

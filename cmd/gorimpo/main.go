@@ -10,7 +10,7 @@ import (
 
 	"github.com/LXSCA7/gorimpo/internal/adapters/config"
 	"github.com/LXSCA7/gorimpo/internal/adapters/infrastructure"
-	notifier "github.com/LXSCA7/gorimpo/internal/adapters/notifiers"
+	"github.com/LXSCA7/gorimpo/internal/adapters/notifier"
 	"github.com/LXSCA7/gorimpo/internal/adapters/repository"
 	"github.com/LXSCA7/gorimpo/internal/adapters/scraper"
 	"github.com/LXSCA7/gorimpo/internal/adapters/telemetry"

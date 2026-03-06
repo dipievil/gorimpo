@@ -112,9 +112,7 @@ Search intelligence is entirely controlled via `config.yaml`. Example:
 ```yaml
 app:
   default_notifier: "telegram" # options: gotify, telegram
-  notifiers:
-    telegram:
-      use_topics: true # define if telegram will use topics
+  use_topics: true # define if telegram will use topics
 
 categories: 
   - "🍄 nintendo"

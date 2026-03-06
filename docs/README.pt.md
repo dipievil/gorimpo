@@ -114,9 +114,7 @@ Toda a inteligência de busca é controlada via `config.yaml`. Exemplo:
 ```yaml
 app:
   default_notifier: "telegram" # opções: gotify, telegram
-  notifiers:
-    telegram:
-      use_topics: true # define se o telegram vai utilizar topicos
+  use_topics: true # define se o telegram vai utilizar topicos
 
 categories: 
   - "🍄 nintendo"
